@@ -161,14 +161,14 @@ SHPObject * new_SHPObject(int type, int id, PyObject * parts,
 			  PyObject * part_type_list)
 {
     /* arrays to hold thex and y coordinates of the  vertices */
-    double *xs = NULL, *ys = NULL;
+    double *xs = NULL, *ys = NULL, *zs = NULL;
     /* number of all vertices of all parts */
     int num_vertices;
     /* number of parts in the list parts */
     int num_parts;
-    /* start index of in xs and ys of the part currently worked on */
+    /* start index of in xs, ys and zs of the part currently worked on */
     int part_start;
-    /* array of start indices in xs and ys as expected by shapelib */
+    /* array of start indices in xs, ys and zs as expected by shapelib */
     int *part_starts = NULL;
 
     /* generic counter */
@@ -213,11 +213,12 @@ SHPObject * new_SHPObject(int type, int id, PyObject * parts,
        errors */
     xs = malloc(num_vertices * sizeof(double));
     ys = malloc(num_vertices * sizeof(double));
+    zs = malloc(num_vertices * sizeof(double));
     part_starts = malloc(num_parts * sizeof(int));
     if (part_type_list)
 	part_types = malloc(num_parts * sizeof(int));
 
-    if (!xs || !ys || !part_starts || (part_type_list && !part_types))
+    if (!xs || !ys || !zs || !part_starts || (part_type_list && !part_types))
     {
 	PyErr_NoMemory();
 	goto fail;
@@ -252,8 +253,8 @@ SHPObject * new_SHPObject(int type, int id, PyObject * parts,
 	    if (!tuple)
 		goto fail;
 
-	    if (!PyArg_ParseTuple(tuple, "dd", xs + part_start + j,
-				  ys + part_start + j))
+	    if (!PyArg_ParseTuple(tuple, "ddd", xs + part_start + j,
+				  ys + part_start + j, zs + part_start + j))
 	    {
 		goto fail;
 	    }
@@ -266,9 +267,10 @@ SHPObject * new_SHPObject(int type, int id, PyObject * parts,
     }
 
     result = SHPCreateObject(type, id, num_parts, part_starts, part_types,
-			     num_vertices, xs, ys, NULL, NULL);
+			     num_vertices, xs, ys, zs, NULL);
     free(xs);
     free(ys);
+    free(zs);
     free(part_starts);
     free(part_types);
     return result;
@@ -276,6 +278,7 @@ SHPObject * new_SHPObject(int type, int id, PyObject * parts,
  fail:
     free(xs);
     free(ys);
+    free(zs);
     free(part_starts);
     free(part_types);
     Py_XDECREF(part);
