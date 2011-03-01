@@ -66,7 +66,8 @@ setup(name = "pyshapelib",
       description = "Python bindings for shapelib (support x,y,z data)",
       author = "Bernhard Herzog, update by xunli",
       author_email = "bh@intevation.de, lixun910@gmail.com",
-      url = "",
+      url = "http://code.google.com/p/geoyard",
+      ext_package = "shape",
       py_modules = ["shapelib", "dbflib"],
       ext_modules = extensions)
 
