@@ -1,3 +1,13 @@
+pyshapelib 0.3.1 (2010-02-28)
+===========================
+
+ * New helper python class (space_time_path.py).
+
+ * Update CreateSHPObject() in python wrapper function to support
+   (x,y,z) shape objects.
+
+ * Update functions in 
+
 pyshapelib 0.3 (2004-05-28)
 ===========================
 
