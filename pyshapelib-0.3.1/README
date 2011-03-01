@@ -83,6 +83,12 @@ there's a simple demo/test script called pytest.py.
 
 The change history is recorded in NEWS and in detail in ChangeLog.
 
+Updates
+------
+
+2/28/2010: Modify CreateSHPObject function in python wrapper to support
+           (x,y,z) data. It is widely used in spatio-temporal data 
+           processing, such as space-time path etc.
 
 Contact Information
 -------------------
@@ -96,3 +102,6 @@ Thuban:
 
 Thuban mailing lists:
    http://thuban.intevation.org/mailinglist.html
+
+Updates contact:
+   lixun910@gmail.com

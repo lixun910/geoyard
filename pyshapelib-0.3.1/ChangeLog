@@ -1,3 +1,14 @@
+2010-02-28  Xun Li <lixun910@gmail.com>
+    * README: updates content. Modify CreateSHPObject() in python
+	wrapper function to support (x,y,z) shape objects, which are
+	widely used in spatio-temporal data process.
+	
+	* space_time_path.py (Utility): New, helper class to create 
+	(x,y,z) shape objects from ASCII files, or x[],y[], and z[]
+	lists.
+
+	* NEWS: Update for new release: 0.3.1
+
 2004-05-28  Bernhard Herzog  <bh@intevation.de>
 
 	* README: Flesh out the some more.  Correct the shapelib
