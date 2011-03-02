@@ -1,5 +1,5 @@
 /* Header file for the PyShapelib API for other Python modules */
-/* $Revision: 1.1 $ */
+/* $Revision: 1637 $ */
 
 #ifndef PYSHAPELIB_API_H
 #define PYSHAPELIB_API_H

@@ -47,6 +47,14 @@ def dbf_macros():
     else:
         return [("HAVE_UPDATE_HEADER", "0")]
 
+packages = ['shapelib','dbflib']
+package_dirs = {'':'lib'}
+package_dirs['shapelib'] = os.path.join('lib','shapelib')
+package_dirs['dbflib'] = os.path.join('lib','dbflib')
+        
+options = {}
+
+
 extensions = [Extension("shapelibc",
                         ["shapelib_wrap.c",
                          shp_dir + "/shpopen.c",
@@ -67,7 +75,8 @@ setup(name = "pyshapelib",
       author = "Bernhard Herzog, update by xunli",
       author_email = "bh@intevation.de, lixun910@gmail.com",
       url = "http://code.google.com/p/geoyard",
-      ext_package = "shape",
+      packages          = packages,
+      package_dir       = package_dirs,
       py_modules = ["shapelib", "dbflib"],
       ext_modules = extensions)
 

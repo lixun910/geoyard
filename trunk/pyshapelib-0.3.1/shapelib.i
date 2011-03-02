@@ -192,7 +192,7 @@ SHPObject * new_SHPObject(int type, int id, PyObject * parts,
 
     /* parts and part_types have to have the same lengths */
     if (part_type_list
-	&& PySequence_Length(part) != PySequence_Length(part_type_list))
+	&& PySequence_Length(parts) != PySequence_Length(part_type_list))
     {
 	PyErr_SetString(PyExc_TypeError,
 			"parts and part_types have to have the same lengths");
