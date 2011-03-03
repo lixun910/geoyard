@@ -608,8 +608,8 @@ build_vertex_list(SHPObject *object, int index, int length)
 
     for (i = 0; i < length; i++, index++)
     {
-	vertex = Py_BuildValue("dd", object->padfX[index],
-			       object->padfY[index]);
+	vertex = Py_BuildValue("ddd", object->padfX[index],
+			       object->padfY[index],object->padfZ[index]);
 	if (!vertex)
 	    goto fail;
 	if (PyList_SetItem(list, i, vertex) < 0)
