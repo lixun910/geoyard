@@ -1,0 +1,1 @@
+%windir%\system32\mshta.exe vbscript:createobject("wscript.shell").run("c:\\python26\\python.exe c:\\python26\\Scripts\\aspen",0)(window.close)
