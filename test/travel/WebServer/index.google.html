@@ -1,0 +1,220 @@
+
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
+<title>Google Maps JavaScript API v3 Example: Polygon Arrays</title> 
+<link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" /> 
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script> 
+<script type="text/javascript"> 
+ 
+  var map;
+  var infoWindow;
+  var last_zoomLevel = 6;
+  var roi_layer = new Array();
+  var centroid_layer = new Array();
+  var flow_layer =new Array();
+  
+  function initialize() {
+	var zoomLevel = 6;
+    var myLatLng = new google.maps.LatLng(36.69,-119.29);
+    var myOptions = {
+      zoom: zoomLevel,
+      center: myLatLng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    map = new google.maps.Map(document.getElementById("map_canvas"),myOptions);
+	
+	// Binding Events
+	google.maps.event.addListener(map, 'zoom_changed', function() {
+		zoomLevel = map.getZoom();
+		//console.log("zoomLevel=" + zoomLevel.toString() + ",lastZoom=" + last_zoomLevel.toString());
+		if ((5<= last_zoomLevel && last_zoomLevel<= 7 && (zoomLevel > 7||zoomLevel < 5)) || 
+		   (7< last_zoomLevel && last_zoomLevel<=9 && (zoomLevel > 9||zoomLevel <= 7)) ||
+		   ( last_zoomLevel >9 && zoomLevel <=9) ||
+		   ( last_zoomLevel <5 && zoomLevel >=5)) {		
+			var i = 0;
+			for (i = 0; i<roi_layer.length;i++) {
+				roi_layer[i].setMap(null);
+			}
+			for (i = 0; i<centroid_layer.length;i++) {
+				centroid_layer[i].setMap(null);
+			}
+			for (i = 0; i<flow_layer.length;i++) {
+				flow_layer[i].setMap(null);
+			}
+			update_travelflow(zoomLevel,map);
+		}
+		last_zoomLevel = zoomLevel;
+	});
+	
+	update_travelflow(zoomLevel,map);
+  }
+ 
+  function get_rnd_color() {
+	return "#" + Math.round(0xffffff * Math.random()).toString(16);
+  }
+  
+  function draw_centroid(map,_center, _radius, borderColour,fillColour) { 
+	var zoomLevel = map.getZoom();
+	if (zoomLevel >=5 && zoomLevel <=7) {
+		_radius = 15000;
+	}else if (zoomLevel>7 && zoomLevel<=9) {
+		_radius = 1500;
+	}else if (zoomLevel>9) {
+		_radius = 150;
+	}
+	var circle = new google.maps.Circle({
+		radius: _radius, 
+		center: _center,
+		strokeColor: borderColour,
+		strokeOpacity: 0.8,
+		strokeWeight: 1,
+		fillColor: fillColour,
+		fillOpacity: 0.35
+	});
+	var inner_circle = new google.maps.Circle({
+		radius: _radius/3, 
+		center: _center,
+		strokeColor: borderColour,
+		strokeOpacity: 0.8,
+		strokeWeight: 1,
+		fillColor: fillColour,
+		fillOpacity: 0.35
+	});
+	circle.setMap(map);
+	inner_circle.setMap(map);
+	centroid_layer.push(circle);
+	centroid_layer.push(inner_circle);
+  }
+  
+  function draw_polygon(map,polygonCoords, polygonColor,weight) {
+	var cluster_hull =  new google.maps.Polygon({
+      paths: polygonCoords,
+      strokeColor: "000000",
+      strokeOpacity: 0.8,
+      strokeWeight: weight,
+      fillColor: polygonColor,
+      fillOpacity: 0.45
+    });
+	cluster_hull.setMap(map);
+	return cluster_hull;
+  }
+  
+  function update_travelflow(zoomLevel,map) {	
+	var results = loadTravelFlows(zoomLevel,0);
+	results = results.split("|");
+	var str_rois = results[0];
+	var str_centroids =results[1];
+	var str_flows = results[2];
+	var i = 0;
+	// rois
+	var rois = str_rois.split(";");
+	for ( i=0; i< rois.length; i++) {
+		var str_roi = rois[i].split("&"); // polygon
+		var j = 0;
+		var roi = new Array();
+		for ( j = 0;j<str_roi.length;j++) {
+			var point = str_roi[j].split(",");
+			var lng = parseFloat(point[0]);
+			var lat = parseFloat(point[1]);
+			roi.push(new google.maps.LatLng(lat,lng));
+		}
+		roi_layer.push(draw_polygon(map,roi,get_rnd_color(),2));
+	}
+	// centroids
+	var centroids = str_centroids.split("&");
+	for (i =0; i<centroids.length;i++) {
+		var point = centroids[i].split(",");
+		var lng = parseFloat(point[0]);
+		var lat = parseFloat(point[1]);
+		var centroid = new google.maps.LatLng(lat,lng);
+		draw_centroid(map,centroid, 20000, "#0000ff","#0000ff");
+	}
+	// flows
+	var flows = str_flows.split(";");
+	for ( i=0; i< flows.length; i++) {
+		var str_flow = flows[i].split("&"); // polygon
+		var j = 0;
+		var flow = new Array();
+		for ( j = 0;j<str_flow.length;j++) {
+			var point = str_flow[j].split(",");
+			var lng = parseFloat(point[0]);
+			var lat = parseFloat(point[1]);
+			flow.push(new google.maps.LatLng(lat,lng));
+		}
+		flow_layer.push(draw_polygon(map,flow,"#ffff00",1));
+		
+	}
+	
+    // Add a listener for the click event
+    //google.maps.event.addListener(bermudaTriangle, 'click', showArrays);
+    //infowindow = new google.maps.InfoWindow();
+  }
+  
+  function showArrays(event) {
+    // Since this Polygon only has one path, we can call getPath()
+    // to return the MVCArray of LatLngs
+    var vertices = this.getPath();
+    var contentString = "<b>Bermuda Triangle Polygon</b><br />";
+    contentString += "Clicked Location: <br />" + event.latLng.lat() + "," + event.latLng.lng() + "<br />";
+ 
+    // Iterate over the vertices.
+    for (var i =0; i < vertices.length; i++) {
+      var xy = vertices.getAt(i);
+      contentString += "<br />" + "Coordinate: " + i + "<br />" + xy.lat() +"," + xy.lng();
+    }
+    // Replace our Info Window's content and position
+    infowindow.setContent(contentString);
+    infowindow.setPosition(event.latLng);
+    infowindow.open(map);
+  }  
+  
+  // retrieve travel flow content from server
+  function getReq() {
+	var req = false;
+	if(window.XMLHttpRequest) {
+		try {
+			req = new XMLHttpRequest();
+		} catch(e) {
+			req = false;
+		}	
+	} else if(window.ActiveXObject) {
+		try {
+			req = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch(e) {
+			req = false;
+		}
+	}
+	if (! req) {
+		alert("Your browser does not support XMLHttpRequest.");
+	}
+	return req;
+  }
+
+  function loadTravelFlows(zoomLevel,bound) {
+	var req = getReq();
+	var errorMsg = "";
+	try {
+		var url = "http://localhost:8080/photo/"+zoomLevel+"/0";
+		req.open("GET", url , false);
+		req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');	
+		req.send();	    
+	} catch (e) {
+		errorMsg = "Error: " + e;
+	}
+			
+	if (req.status != 200) {
+		alert("Ajax failed. " + errorMsg + ". Response status code: " + req.status + ". Message: " + req.responseText);
+	} else {
+		return req.responseText;
+	}
+	return ""
+  }
+</script> 
+</head> 
+<body onload="initialize()"> 
+  <div id="map_canvas"></div> 
+</body> 
+</html> 

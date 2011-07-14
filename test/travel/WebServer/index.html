@@ -1,0 +1,185 @@
+
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/> 
+<title>PhotoGeography Demo</title> 
+<script type="text/javascript" src="http://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0"></script>
+<script type="text/javascript"> 
+	
+  var map;
+  var infoWindow;
+  var last_zoomLevel = 6;
+  console.log(Math.round(255 * Math.random()));
+  var blue = new Microsoft.Maps.Color(150, 0, 0, 255);
+  var yellow = new Microsoft.Maps.Color(150, 255, 255, 0);
+  
+  var roi_layer = new Microsoft.Maps.EntityCollection();
+  var centroid_layer = new Microsoft.Maps.EntityCollection();
+  var flow_layer =new Microsoft.Maps.EntityCollection();
+  
+  function initialize() {
+	var zoomLevel = 6;
+    var myOptions = {
+      credentials: "AjP_EQXyQqtMCyczml_bWKqaP66k1GIct77SeesSq1n8c5BfVm4Dg8l7G7AxoEao",
+      center: new Microsoft.Maps.Location(36.69,-119.29),
+      mapTypeId: Microsoft.Maps.MapTypeId.road,
+	  zoom: zoomLevel
+    };
+	
+    map = new Microsoft.Maps.Map(document.getElementById("map_canvas"), myOptions);
+
+	// Binding Events
+	Microsoft.Maps.Events.addHandler(map, 'viewchangestart', function() {
+		zoomLevel = map.getZoom();
+		console.log("zoomLevel=" + zoomLevel.toString() + ",lastZoom=" + last_zoomLevel.toString());
+		if ((5<= last_zoomLevel && last_zoomLevel< 7 && (zoomLevel >= 7||zoomLevel < 5)) || 
+		   (7<= last_zoomLevel && last_zoomLevel<9 && (zoomLevel >= 9||zoomLevel < 7)) ||
+		   ( last_zoomLevel >=9 && zoomLevel <9) ||
+		   ( last_zoomLevel <=5 && zoomLevel >5)) {		
+			var i = 0;
+			
+			roi_layer.clear();
+			centroid_layer.clear();
+			flow_layer.clear();
+			
+			update_travelflow(zoomLevel,map);
+		}
+		last_zoomLevel = zoomLevel;
+	});
+	
+	update_travelflow(zoomLevel,map);
+  }
+ 
+  function get_rnd_color() {
+	return new Microsoft.Maps.Color(100,
+		Math.round(255 * Math.random()),
+		Math.round(255 * Math.random()),
+		Math.round(255 * Math.random()));
+  }
+  
+  function draw_polygon(map,polygonCoords, polygonColor,weight) {
+	var stroke_color = new Microsoft.Maps.Color(100,0, 0, 0);
+
+	var cluster_hull =  new Microsoft.Maps.Polygon(polygonCoords,{
+      fillColor: polygonColor,
+	  strokeThickness: weight,
+	  strokeColor: stroke_color
+    });
+	return cluster_hull;
+  }
+  
+  function update_travelflow(zoomLevel,map) {	
+	var results = loadTravelFlows(zoomLevel,0);
+	results = results.split("|");
+	var str_rois = results[0];
+	var str_centroids =results[1];
+	var str_flows = results[2];
+	var i = 0;
+	// rois
+	var rois = str_rois.split(";");
+	for ( i=0; i< rois.length; i++) {
+		var str_roi = rois[i].split("&"); // polygon
+		var j = 0;
+		var roi = new Array();
+		for ( j = 0;j<str_roi.length;j++) {
+			var point = str_roi[j].split(",");
+			var lng = parseFloat(point[0]);
+			var lat = parseFloat(point[1]);
+			roi.push(new Microsoft.Maps.Location(lat,lng));
+		}
+		roi_layer.push(draw_polygon(map,roi,get_rnd_color(),2));
+	}
+	// centroids
+	var centroids = str_centroids.split(";");
+	for (i =0; i<centroids.length;i++) {
+		var str_centroid = centroids[i].split("&"); // polygon
+		var j = 0;
+		
+		var centroid = new Array();
+		for ( j = 0;j<str_centroid.length;j++) {
+			var point = str_centroid[j].split(",");
+			var lng = parseFloat(point[0]);
+			var lat = parseFloat(point[1]);
+			centroid.push(new Microsoft.Maps.Location(lat,lng));
+		}
+		centroid_layer.push(draw_polygon(map,centroid,blue,1));
+	}
+	// flows
+	var flows = str_flows.split(";");
+	for ( i=0; i< flows.length; i++) {
+		var str_flow = flows[i].split("&"); // polygon
+		var j = 0;
+		var flow = new Array();
+		for ( j = 0;j<str_flow.length;j++) {
+			var point = str_flow[j].split(",");
+			var lng = parseFloat(point[0]);
+			var lat = parseFloat(point[1]);
+			flow.push(new Microsoft.Maps.Location(lat,lng));
+		}
+		flow_layer.push(draw_polygon(map,flow,yellow,1));
+	}
+
+	map.entities.push(roi_layer);
+	map.entities.push(centroid_layer);
+	map.entities.push(flow_layer);
+  }
+ 
+  
+  // retrieve travel flow content from server
+  function getReq() {
+	var req = false;
+	if(window.XMLHttpRequest) {
+		try {
+			req = new XMLHttpRequest();
+		} catch(e) {
+			req = false;
+		}	
+	} else if(window.ActiveXObject) {
+		try {
+			req = new ActiveXObject("Microsoft.XMLHTTP");
+		} catch(e) {
+			req = false;
+		}
+	}
+	if (! req) {
+		alert("Your browser does not support XMLHttpRequest.");
+	}
+	return req;
+  }
+
+  function loadTravelFlows(zoomLevel,bound) {
+	var req = getReq();
+	var errorMsg = "";
+	try {
+		var url = "/photo/"+zoomLevel+"/0";
+		req.open("GET", url , false);
+		req.setRequestHeader('Content-Type','application/x-www-form-urlencoded');	
+		req.send();	    
+	} catch (e) {
+		errorMsg = "Error: " + e;
+	}
+			
+	if (req.status != 200) {
+		alert("Ajax failed. " + errorMsg + ". Response status code: " + req.status + ". Message: " + req.responseText);
+	} else {
+		return req.responseText;
+	}
+	return ""
+  }
+</script> 
+</head> 
+<body onload="initialize()"> 
+  <div id="map_canvas" ></div> 
+  <div id="brand" style="position: absolute; left: 5px; top: 50px; height: 200px; width: 300px;">
+  Photo Geography @ <font color="#999999"><a href="http://www.geosimulation.org">Geosimulation Laboratory</a><br>
+  Arizona State University</font>
+  <br><br><br><br><br><br><br>
+  Demonstration Information:<br>
+  =================<br>
+  Study Area: California<br>
+  # GeoPhotos: 44,764<br>
+  # Users: 1,057
+  </div>
+</body> 
+</html> 
