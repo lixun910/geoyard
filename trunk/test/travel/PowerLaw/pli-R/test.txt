@@ -1,2 +1,0 @@
-[1] "#exponential truncated model"
-[1] 5 4 1
