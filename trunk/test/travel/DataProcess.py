@@ -2,10 +2,10 @@ import sys
 import pylab as P
 import scipy as S
 import numpy as N
+
 from optics import *
 from ShapeHelper import *
 import shapelib
-import time
 import pickle
 from datetime import datetime, date, time
 from shapely.geometry import *
