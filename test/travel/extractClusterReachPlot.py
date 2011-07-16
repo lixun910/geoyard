@@ -1,9 +1,8 @@
 import numpy as np
 import scipy
-import sys
-import operator
-import random
 import pylab as P
+import sys,operator,random
+
 from ShapeHelper import *
 
     
